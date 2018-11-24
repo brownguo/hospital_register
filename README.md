@@ -11,6 +11,10 @@
 
 - 就医挂号是刚需。北京挂号不亚于春运回家抢票，每次放号瞬间被秒杀一空，拼手速很难挂到号，因此有了此脚本。
 
+## 运行截图
+
+![Image text](https://github.com/brownguo/hospital_register/blob/master/1543069160532.jpg)
+
 
 ## 运行环境
 
