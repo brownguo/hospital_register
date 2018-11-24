@@ -7,8 +7,9 @@
 ![](https://img.shields.io/badge/platform-OSX-red.svg)
 ![](https://img.shields.io/github/size/webcaetano/craft/build/phaser-craft.min.js.svg)
 
-
 - 本程序用于北京市预约挂号统一平台挂号,目前只支持北京地区医院挂号。
+
+- 今年一直都在医院泡着，并且就医挂号是刚需。北京挂号不亚于春运回家抢票，每次放号瞬间被秒杀一空，拼手速很难挂到号，因此有了此脚本。
 
 
 ## 运行环境
@@ -17,7 +18,7 @@
 - OSX
 - Sqlite3
 
-##使用方法
+## 使用方法
 
 - php hospital_register.php
 
@@ -34,6 +35,12 @@
             'medicareCardId'=>'xxx',        //社保卡号
         );
 ```
+
+## 注意
+
+- ！！！脚本目前只支持在Mac使用，并且手机一定要是iPhone，其他手机读取不到验证码！！！
+
+- 验证码读取原理：手机接收到验证码之后需要把短信转发到Mac上，然后脚本自动读取iMessage消息，最后匹配114验证码。
 
 ## 更新日志
 
