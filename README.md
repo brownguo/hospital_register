@@ -6,8 +6,6 @@
 ![](https://img.shields.io/travis/rust-lang/rust.svg)
 ![](https://img.shields.io/badge/platform-OSX-red.svg)
 
-[![GitHub repo size in bytes](https://img.shields.io/github/repo-size/badges/shields.svg)](https://github.com/brownguo/hospital_register)
-
 - 本程序用于北京市预约挂号统一平台挂号,目前只支持北京地区医院挂号。
 
 - 就医挂号是刚需。北京挂号不亚于春运回家抢票，每次放号瞬间被秒杀一空，拼手速很难挂到号，因此有了此脚本。
