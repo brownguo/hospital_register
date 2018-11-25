@@ -14,10 +14,6 @@
 ## 运行截图
 
 ![Image text](https://github.com/brownguo/hospital_register/blob/master/1543069160532.jpg)
-<<<<<<< HEAD
-=======
-
->>>>>>> b12082d741cd1a5896d9dd393e0f916c33be40a5
 
 ## 运行环境
 
