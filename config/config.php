@@ -6,13 +6,13 @@ class register_conf
     {
         //肾内科,200003979,妇科内分泌门诊,200046684,内分泌王海宁科室200039566,普通内分泌门诊200039564
         $userConf = array(
-            'username'      =>'xxxxxxxxx',
-            'password'      =>'xxxxxxxxx',
+            'username'      =>'xxxxxxxxx',    //114用户名
+            'password'      =>'xxxxxxxxx',    //114密码
             'dutyDate'      =>'2018-11-30',   //挂号日期
             'hospitalId'    =>'142',          //医院ID
             'departmentId'  =>'200039600',    //科室ID
             'dutyCode'      =>'1',            //上午/下午
-            'medicareCardId'=>'xxxxxxxxx', //社保卡号
+            'medicareCardId'=>'xxxxxxxxx',    //社保卡号
             'autoChoose'    =>true,           //系统自动选择医生
         );
 
