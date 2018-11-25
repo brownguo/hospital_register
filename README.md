@@ -5,7 +5,7 @@
 ![](https://img.shields.io/travis/php-v/symfony/symfony.svg)
 ![](https://img.shields.io/travis/rust-lang/rust.svg)
 ![](https://img.shields.io/badge/platform-OSX-red.svg)
-![](https://img.shields.io/github/size/webcaetano/craft/build/phaser-craft.min.js.svg)
+![](https://img.shields.io/steam/size/:id.svg)
 
 - 本程序用于北京市预约挂号统一平台挂号,目前只支持北京地区医院挂号。
 
