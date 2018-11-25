@@ -13,7 +13,7 @@
 
 ## 运行截图
 
-![Image text](https://github.com/brownguo/hospital_register/blob/master/1543069160532.jpg)
+![Image text](https://github.com/brownguo/hospital_register/blob/master/img/desc2.png)
 
 ## 运行环境
 
