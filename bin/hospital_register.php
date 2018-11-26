@@ -103,7 +103,7 @@ class hospital_register
         {
             $error = posix_get_last_error();
 
-            $this->helper->showColoredString('Error:'.posix_strerror($error),'red');
+            $this->helper->showColoredString('Error:'.posix_strerror($error),'error');
 
             exit(0);
         }
