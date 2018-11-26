@@ -30,6 +30,7 @@ class hospital_register
     protected $verify_code;
 
     protected $iMessages;
+    protected $db_path;
 
     protected $user_conf;
     protected $hospital_conf;
@@ -43,6 +44,7 @@ class hospital_register
     public function __construct()
     {
         $this->helper = new Thelper();
+        $this->db_path  = getenv('HOME').'/Library/Messages/chat.db';
     }
 
     public function _init()
@@ -91,6 +93,21 @@ class hospital_register
             }
             echo str_pad($ext_name, $pad_length), "\033[32;40m [OK] \033[0m\n";
         }
+
+        //检查sqlite文件是否可读权限
+        if(posix_access($this->db_path, POSIX_R_OK | POSIX_W_OK))
+        {
+            $this->helper->showColoredString(sprintf('[%s] is readable and writable',$this->db_path));
+        }
+        else
+        {
+            $error = posix_get_last_error();
+
+            $this->helper->showColoredString('Error:'.posix_strerror($error),'red');
+
+            exit(0);
+        }
+
     }
 
     public function load_conf()
