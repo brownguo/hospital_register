@@ -153,7 +153,7 @@ class Thelper{
          * @param null $header
          * @return mixed
          */
-        public function SendPost($FullHttpUrl,$Req,$is_save_cookies=false,$set_cookies=false,$isHttps=false,$header = null)
+        public function SendPost($FullHttpUrl,$Req,$is_save_cookies=false,$set_cookies=false,$isHttps=false,$header = null,$proxy = null)
         {
             $ch = curl_init();
 
@@ -175,6 +175,13 @@ class Thelper{
             if($set_cookies)
             {
                 curl_setopt($ch, CURLOPT_COOKIEFILE, $cookie_jar);
+            }
+
+            if($proxy !== null)
+            {
+                curl_setopt($ch, CURLOPT_PROXY, $proxy['address']); //代理服务器地址
+                curl_setopt($ch, CURLOPT_PROXYPORT,$proxy['port']); //代理服务器端口
+                curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
             }
 
             curl_setopt($ch, CURLOPT_URL, $FullHttpUrl);
