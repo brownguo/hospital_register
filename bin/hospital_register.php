@@ -128,6 +128,7 @@ class hospital_register
 
         if(!$res)
         {
+            logger::info(sprintf('请求号源出错,res:%s',$res));
             logger::notice('请求号源出错,程序退出','error');
             exit(0);
         }
@@ -179,6 +180,8 @@ class hospital_register
             $url = self::$hospital_conf['login_url'];
 
             $res = requests::post($url,$args,true,false);
+
+            logger::info(sprintf('cookies登陆失败,开始使用账号密码登录,Args:%s',$res));
 
             $res = json_decode($res,true);
 
@@ -376,6 +379,7 @@ class hospital_register
 
         if($res['code'] == 1 && !empty($res['orderId']))
         {
+            logger::info('挂号成功,info:'.print_r($res,true));
             logger::notice('挂号成功');
         }
         else
@@ -397,5 +401,4 @@ spl_autoload_register(function($name)
         if (file_exists($filename))
             require_once $filename;
     }
-});
-hospital_register::_init();
+});hospital_register::_init();
