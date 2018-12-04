@@ -10,46 +10,37 @@ date_default_timezone_set('PRC');
 
 define('SERVER_BASE', realpath(__dir__ . '/..') . '/');
 
-if(is_file(SERVER_BASE.'config/config.php'))
-{
-    include_once SERVER_BASE.'config/config.php';
-}
-
 class hospital_register
 {
-    protected $conf;
-    protected $mobileNo;
-    protected $password;
-    protected $yzm;
-    protected $isAjax;
+    protected static $conf;
+    protected static $mobileNo;
+    protected static $password;
+    protected static $yzm;
+    protected static $isAjax;
 
-    protected $doctor = array();
+    protected static $doctor = array();
 
-    protected $patientId;   //就诊人ID
+    protected static $patientId;   //就诊人ID
 
-    protected $verify_code;
+    protected static $verify_code;
 
-    protected $iMessages;
-    protected $db_path;
+    protected static $iMessages;
+    protected static $db_path;
 
-    protected $user_conf;
-    protected $hospital_conf;
-    protected $user_agent;
-    protected $helper;
+    protected static $user_conf;
+    protected static $hospital_conf;
+    protected static $user_agent;
+    protected static $helper;
 
-    protected $appoint_day; //预约周期
+    protected static $appoint_day; //预约周期
 
-    protected $display_lenght = 25;
-
-    public function __construct()
-    {
-        $this->helper = new Thelper();
-        $this->db_path  = getenv('HOME').'/Library/Messages/chat.db';
-    }
+    protected static $display_lenght = 25;
 
     public function _init()
     {
-        $this->helper->showColoredString('程序启动');
+        logger::notice('程序启动');
+        //sqlite路径
+        self::$db_path = getenv('HOME').'/Library/Messages/chat.db';
         //检查环境
         self::_checkEnv();
         //加载配置文件
@@ -68,9 +59,9 @@ class hospital_register
         self::do_register();
     }
 
-    public function _checkEnv()
+    public static function _checkEnv()
     {
-        $this->helper->showColoredString('检查Server环境');
+        logger::notice('检查Server环境');
 
         $pad_length = 26;
 
@@ -95,49 +86,49 @@ class hospital_register
         }
 
         //检查sqlite文件是否可读权限
-        if(posix_access($this->db_path, POSIX_R_OK | POSIX_W_OK))
+        if(posix_access(self::$db_path, POSIX_R_OK | POSIX_W_OK))
         {
-            $this->helper->showColoredString(sprintf('[%s] is readable and writable',$this->db_path));
+            logger::notice(sprintf('[%s] is readable and writable',self::$db_path));
         }
         else
         {
             $error = posix_get_last_error();
 
-            $this->helper->showColoredString('Error:'.posix_strerror($error),'error');
+            logger::notice('Error:'.posix_strerror($error),'error');
 
             exit(0);
         }
 
     }
 
-    public function load_conf()
+    public static function load_conf()
     {
-        $this->user_conf     = register_conf::user_conf();
-        $this->hospital_conf = register_conf::hospital_conf();
-        $this->user_agent    = register_conf::user_agent_conf();
-        $this->mobileNo      = base64_encode($this->user_conf['username']);
-        $this->password      = base64_encode($this->user_conf['password']);
-        $this->yzm           = '';
-        $this->isAjax        = 'true';
+        self::$user_conf     = register_conf::user_conf();
+        self::$hospital_conf = register_conf::hospital_conf();
+        self::$user_agent    = register_conf::user_agent_conf();
+        self::$mobileNo      = base64_encode(self::$user_conf['username']);
+        self::$password      = base64_encode(self::$user_conf['password']);
+        self::$yzm           = '';
+        self::$isAjax        = 'true';
 
-        if(!empty($this->mobileNo) && !empty($this->password))
+        if(!empty(self::$mobileNo) && !empty(self::$password))
         {
-            $this->helper->showColoredString('配置文件加载成功');
+            logger::notice('配置文件加载成功');
         }
     }
 
-    public function get_duty_time()
+    public static function get_duty_time()
     {
-        $user_conf     = $this->user_conf;
-        $hospital_conf = $this->hospital_conf;
+        $user_conf     = self::$user_conf;
+        $hospital_conf = self::$hospital_conf;
 
         $url = sprintf($hospital_conf['appoint_url'],$user_conf['hospitalId'],$user_conf['departmentId']);
 
-        $res = $this->helper->SendGet($url);
+        $res = requests::get($url);
 
         if(!$res)
         {
-            $this->helper->showColoredString('请求号源出错,程序退出','error');
+            logger::notice('请求号源出错,程序退出','error');
             exit(0);
         }
 
@@ -146,76 +137,76 @@ class hospital_register
 
         preg_match('/<strong>(.*?)<\/strong>/i',$hospital_name_arr[1],$hospital_name);
 
-        $this->helper->showColoredString($hospital_name[1]);
+        logger::notice($hospital_name[1]);
 
         //获取当前医院放号时间
 
         preg_match('/<span>更新时间：<\/span>每日(.*?)更新/i',$res,$refreshTime);
 
-        $this->helper->showColoredString("放号时间,每天：{$refreshTime[1]}");
+        logger::notice("放号时间,每天：{$refreshTime[1]}");
 
         //获取预约周期
 
         preg_match('/<span>预约周期：<\/span>(.*?)<script/i',$res,$appoint_day);
 
-        $this->appoint_day = $appoint_day[1];
+        self::$appoint_day = $appoint_day[1];
 
-        $this->helper->showColoredString("预约周期：{$this->appoint_day}天");
+        logger::notice(sprintf("预约周期:[%s]天",self::$appoint_day));
 
     }
 
-    public function auth_login()
+    public static function auth_login()
     {
-        $this->helper->showColoredString('开始登陆');
+        logger::notice('开始登陆');
 
-        $this->helper->showColoredString('优先使用Cookies登录');
+        logger::notice('优先使用Cookies登录');
 
         if(self::is_login())
         {
-            $this->helper->showColoredString('使用Cookies登录成功');
+            logger::notice('使用Cookies登录成功');
         }
         else
         {
-            $this->helper->showColoredString('Cookies登录失败,开始使用用户名密码登录');
+            logger::notice('Cookies登录失败,开始使用用户名密码登录');
 
             $args = array(
-                'mobileNo'=>$this->mobileNo,
-                'password'=>$this->password,
-                'yzm'     =>$this->yzm,
-                'isAjax'  =>$this->isAjax
+                'mobileNo'=>self::$mobileNo,
+                'password'=>self::$password,
+                'yzm'     =>self::$yzm,
+                'isAjax'  =>self::$isAjax
             );
 
-            $url = $this->hospital_conf['login_url'];
+            $url = self::$hospital_conf['login_url'];
 
-            $res = $this->helper->sendPost($url,$args,true);
+            $res = requests::post($url,$args,true,false);
 
             $res = json_decode($res,true);
 
             if($res['code'] == 200 && $res['msg'] == 'OK')
             {
-                $this->helper->showColoredString('登陆成功');
+                logger::notice('登陆成功');
             }
             else
             {
-                $this->helper->showColoredString($res['msg'].' 程序退出');
+                logger::notice($res['msg'].' 程序退出');
                 exit(0);
             }
         }
     }
 
-    public function is_login()
+    public static function is_login()
     {
         $args = array(
-            'hospitalId'    =>$this->user_conf['hospitalId'],
-            'departmentId'  =>$this->user_conf['departmentId'],
-            'dutyCode'      =>$this->user_conf['dutyCode'],
-            'dutyDate'      =>$this->user_conf['dutyDate'],
+            'hospitalId'    =>self::$user_conf['hospitalId'],
+            'departmentId'  =>self::$user_conf['departmentId'],
+            'dutyCode'      =>self::$user_conf['dutyCode'],
+            'dutyDate'      =>self::$user_conf['dutyDate'],
             'isAjax'        =>true,
         );
 
-        $url = $this->hospital_conf['part_duty_url'];
+        $url = self::$hospital_conf['part_duty_url'];
 
-        $res = $this->helper->sendPost($url,$args,false,true);
+        $res = requests::post($url,$args,false,true);
 
         $res = json_decode($res,true);
 
@@ -229,166 +220,167 @@ class hospital_register
         }
     }
 
-    public function choose_doctor()
+    public static function choose_doctor()
     {
-        $this->helper->showColoredString('当前挂号日期：'.$this->user_conf['dutyDate'].$this->user_conf['dutyCodeMsg']);
-        $this->helper->showColoredString('当前最晚可挂：'.date("Y-m-d",strtotime("+{$this->appoint_day} day")));
+        logger::notice('当前挂号日期：'.self::$user_conf['dutyDate'].self::$user_conf['dutyCodeMsg']);
+        $appoint_day = self::$appoint_day;
+        logger::notice('当前最晚可挂：'.date("Y-m-d",strtotime("+{$appoint_day} day")));
 
         $args = array(
-            'hospitalId'    =>$this->user_conf['hospitalId'],
-            'departmentId'  =>$this->user_conf['departmentId'],
-            'dutyCode'      =>$this->user_conf['dutyCode'],
-            'dutyDate'      =>$this->user_conf['dutyDate'],
+            'hospitalId'    =>self::$user_conf['hospitalId'],
+            'departmentId'  =>self::$user_conf['departmentId'],
+            'dutyCode'      =>self::$user_conf['dutyCode'],
+            'dutyDate'      =>self::$user_conf['dutyDate'],
             'isAjax'        =>true,
         );
 
-        $url = $this->hospital_conf['part_duty_url'];
+        $url = self::$hospital_conf['part_duty_url'];
 
-        $res = $this->helper->sendPost($url,$args,false,true);
+        $res = requests::post($url,$args,false,true);
 
         $res = json_decode($res,true);
 
         if($res['code'] == 200 && $res['msg'] == 'OK')
         {
-            $this->helper->showColoredString('正在获取医生列表');
-            $this->helper->safeEcho("-----------------------医生列表---------------------------------------------\n");
-            $this->helper->safeEcho("hospital_register version:1.0          PHP version:". PHP_VERSION. "\n");
-            $this->helper->safeEcho("----------------------------------------------------------------------------\n");
-            $this->helper->safeEcho(
-                "ID". str_pad('',$this->display_lenght + 2 - strlen('ID')).
-                "医生ID". str_pad('',$this->display_lenght + 2 - strlen('医生ID')).
-                "挂号ID". str_pad('',$this->display_lenght + 2 - strlen('医生ID')).
-                "医生姓名". str_pad('',$this->display_lenght + 2 - strlen('医生姓名')).
-                "医生级别". str_pad('', $this->display_lenght + 2 - strlen('医生级别')).
-                "擅长技能". str_pad('', $this->display_lenght + 2 - strlen('擅长技能')).
-                "号余量". str_pad('',$this->display_lenght + 2 - strlen('号余量'))."\n");
+            logger::notice('正在获取医生列表');
+            logger::safeEcho("-----------------------医生列表---------------------------------------------\n");
+            logger::safeEcho("hospital_register version:1.0          PHP version:". PHP_VERSION. "\n");
+            logger::safeEcho("----------------------------------------------------------------------------\n");
+            logger::safeEcho(
+                "ID". str_pad('',self::$display_lenght + 2 - strlen('ID')).
+                "医生ID". str_pad('',self::$display_lenght + 2 - strlen('医生ID')).
+                "挂号ID". str_pad('',self::$display_lenght + 2 - strlen('医生ID')).
+                "医生姓名". str_pad('',self::$display_lenght + 2 - strlen('医生姓名')).
+                "医生级别". str_pad('', self::$display_lenght + 2 - strlen('医生级别')).
+                "擅长技能". str_pad('', self::$display_lenght + 2 - strlen('擅长技能')).
+                "号余量". str_pad('',self::$display_lenght + 2 - strlen('号余量'))."\n");
 
             //医生和挂号信息
-            $this->doctor     = $res['data'];
+            self::$doctor     = $res['data'];
 
             foreach ($res['data'] as $k=>$v)
             {
-                echo $k.$this->helper->str_pad_fill(25,$k).
-                     $v['doctorId'].$this->helper->str_pad_fill(25,$v['doctorId']).
-                     $v['dutySourceId'].$this->helper->str_pad_fill(25,$v['dutySourceId']).
-                     $v['doctorName'].$this->helper->str_pad_fill(25,$v['doctorName']).
-                     $v['doctorTitleName'].$this->helper->str_pad_fill(25,$v['doctorTitleName']).
-                     $v['skill'].$this->helper->str_pad_fill(25,$v['skill']).
-                     $this->helper->str_pad_fill(5,$v['remainAvailableNumber']).$v['remainAvailableNumber'].
+                echo $k.logger::str_pad_fill(25,$k).
+                     $v['doctorId'].logger::str_pad_fill(25,$v['doctorId']).
+                     $v['dutySourceId'].logger::str_pad_fill(25,$v['dutySourceId']).
+                     $v['doctorName'].logger::str_pad_fill(25,$v['doctorName']).
+                     $v['doctorTitleName'].logger::str_pad_fill(25,$v['doctorTitleName']).
+                     $v['skill'].logger::str_pad_fill(25,$v['skill']).
+                     logger::str_pad_fill(5,$v['remainAvailableNumber']).$v['remainAvailableNumber'].
                      PHP_EOL;
             }
 
-            $this->helper->showColoredString('医生列表获取成功,请选择医生ID：');
+            logger::notice('医生列表获取成功,请选择医生ID：');
 
             $choose_doctor_id = trim(fgets(STDIN));
 
-            if(!is_numeric($choose_doctor_id) || $choose_doctor_id > count($this->doctor))
+            if(!is_numeric($choose_doctor_id) || $choose_doctor_id > count(self::$doctor))
             {
-                $this->helper->showColoredString('指令输入错误请从新输入:');
+                logger::notice('指令输入错误请从新输入:');
                 $choose_doctor_id = trim(fgets(STDIN));
             }
 
-            $this->doctor     = @$res['data'][$choose_doctor_id];
+            self::$doctor     = @$res['data'][$choose_doctor_id];
 
         }
         else
         {
-            $this->helper->showColoredString("获取医生列表失败,{$res['msg']},code:{$res['code']}");
+            logger::notice("获取医生列表失败,{$res['msg']},code:{$res['code']}");
             exit(0);
         }
     }
 
-    public function get_patient_id()
+    public static function get_patient_id()
     {
-        $this->helper->showColoredString('开始获取就诊人ID');
+        logger::notice('开始获取就诊人ID');
 
-        $url = sprintf($this->hospital_conf['patient_form_url'],$this->user_conf['hospitalId'],$this->user_conf['departmentId'],
-            $this->doctor['doctorId'],$this->doctor['dutySourceId']
+        $url = sprintf(self::$hospital_conf['patient_form_url'],self::$user_conf['hospitalId'],self::$user_conf['departmentId'],
+            self::$doctor['doctorId'],self::$doctor['dutySourceId']
             );
 
-        $res = $this->helper->SendGet($url,true);
+        $res = requests::get($url,null,false,true);
 
         preg_match('/<input type="radio" name="hzr" value="(.*?)"/si',$res,$patientId);
 
         if(!empty($patientId[1]))
         {
-            $this->patientId = $patientId[1];
+            self::$patientId = $patientId[1];
 
-            $this->helper->showColoredString('就诊人ID获取成功,当前就诊人ID为：'.$patientId[1]);
+            logger::notice('就诊人ID获取成功,当前就诊人ID为：'.$patientId[1]);
         }
         else
         {
-            $this->helper->showColoredString('就诊人ID获取失败');
+            logger::notice('就诊人ID获取失败');
             exit(0);
         }
     }
 
-    public function get_sms_verify_code()
+    public static function get_sms_verify_code()
     {
-        $this->helper->showColoredString('开始获取获取短信验证码');
+        logger::notice('开始获取获取短信验证码');
 
         $args = array();
-        $url = $this->hospital_conf['send_order_url'];
+        $url = self::$hospital_conf['send_order_url'];
 
-        $res = $this->helper->SendPost($url,$args,false,true);
+        $res = requests::post($url,$args,false,true);
         $res = json_decode($res,true);
 
         if($res['code'] == 200)
         {
             //TUDO
-            $this->helper->showColoredString('短信验证码获取成功');
-            $this->helper->showColoredString('正在等待填充验证码');
+            logger::notice('短信验证码获取成功');
+            logger::notice('正在等待填充验证码');
 
             $iMessages = new iMessage();
 
-            $this->verify_code = $iMessages->_return_verify_code();
+            self::$verify_code = $iMessages->_return_verify_code();
 
-            if($this->verify_code)
+            if(self::$verify_code)
             {
-                $this->helper->showColoredString('iMessage读取成功');
-                $this->helper->showColoredString('验证码自动填充成功:'.$this->verify_code);
+                logger::notice('iMessage读取成功');
+                logger::notice('验证码自动填充成功:'.self::$verify_code);
             }
             else
             {
-                $this->helper->showColoredString('iMessage读取失败');
+                logger::notice('iMessage读取失败');
             }
         }
         else
         {
-            $this->helper->showColoredString($res['msg']);
+            logger::notice($res['msg']);
             exit(0);
         }
     }
 
-    public function do_register()
+    public static function do_register()
     {
         $args = array(
-            'dutySourceId'      =>$this->doctor['dutySourceId'],
-            'hospitalId'        =>$this->user_conf['hospitalId'],
-            'departmentId'      =>$this->user_conf['departmentId'],
-            'doctorId'          =>$this->doctor['doctorId'],
-            'patientId'         =>$this->patientId,
+            'dutySourceId'      =>self::$doctor['dutySourceId'],
+            'hospitalId'        =>self::$user_conf['hospitalId'],
+            'departmentId'      =>self::$user_conf['departmentId'],
+            'doctorId'          =>self::$doctor['doctorId'],
+            'patientId'         =>self::$patientId,
             'hospitalCardId'    =>'',
-            'medicareCardId'    =>$this->user_conf['medicareCardId'],
+            'medicareCardId'    =>self::$user_conf['medicareCardId'],
             'reimbursementType' =>10,   //报销类型
-            'smsVerifyCode'     =>$this->verify_code,
+            'smsVerifyCode'     =>self::$verify_code,
             'childrenBirthday'  =>'',
             'isAjax'            =>true,
         );
 
-        $url = $this->hospital_conf['confirm_url'];
+        $url = self::$hospital_conf['confirm_url'];
 
-        $res = $this->helper->SendPost($url,$args,false,true);
+        $res = requests::post($url,$args,false,true);
 
         $res = json_decode($res,true);
 
         if($res['code'] == 1 && !empty($res['orderId']))
         {
-            $this->helper->showColoredString('挂号成功');
+            logger::notice('挂号成功');
         }
         else
         {
-            $this->helper->showColoredString('挂号失败,'.$res['msg']);
+            logger::notice('挂号失败,'.$res['msg']);
             exit(0);
         }
     }
@@ -406,5 +398,4 @@ spl_autoload_register(function($name)
             require_once $filename;
     }
 });
-$start = new hospital_register();
-$start->_init();
+hospital_register::_init();

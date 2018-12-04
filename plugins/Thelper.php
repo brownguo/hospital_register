@@ -200,6 +200,8 @@ class Thelper{
             {
                 echo 'Curl error: ' . curl_error($ch);
             }
+            curl_close(self::$ch);
+
             return $result;
         }
 
