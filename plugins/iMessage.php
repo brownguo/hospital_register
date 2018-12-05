@@ -22,8 +22,6 @@ class iMessage extends SQLite3
 
     public function __construct()
     {
-        //初始化helper;
-        $this->helper   = new Thelper();
         //初始化chat路径
         $this->db_path  = getenv('HOME').'/Library/Messages/chat.db';
         //初始化当前时间
@@ -38,7 +36,7 @@ class iMessage extends SQLite3
 
     public function _checkEnv()
     {
-        $this->helper->showColoredString('检查SqlLite3环境');
+        logger::notice('检查SqlLite3环境');
 
         $pad_length = 26;
 
@@ -65,11 +63,11 @@ class iMessage extends SQLite3
 
         if($this)
         {
-            $this->helper->showColoredString('Opened database successfully');
+            logger::notice('Opened database successfully');
         }
         else
         {
-            $this->helper->showColoredString('Opened database Fail!');
+            logger::notice('Opened database Fail!','error');
             exit(0);
         }
     }
@@ -102,7 +100,7 @@ class iMessage extends SQLite3
             }
             else
             {
-                $this->helper->showColoredString('iMessage读取失败');
+                logger::notice('iMessage读取失败');
                 exit(0);
             }
         }
