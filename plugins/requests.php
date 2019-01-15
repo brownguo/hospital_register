@@ -63,11 +63,11 @@ class requests
 
         if($is_save_cookies)
         {
-            curl_setopt(self::$ch, CURLOPT_COOKIEJAR, '../logs/cookies.tmp');
+            curl_setopt(self::$ch, CURLOPT_COOKIEJAR, SERVER_BASE.'/logs/cookies.tmp');
         }
         if($is_carry_cookies)
         {
-            curl_setopt(self::$ch, CURLOPT_COOKIEFILE, '../logs/cookies.tmp');
+            curl_setopt(self::$ch, CURLOPT_COOKIEFILE, SERVER_BASE.'/logs/cookies.tmp');
         }
         if(strpos($url, 'https') !== false)
         {
